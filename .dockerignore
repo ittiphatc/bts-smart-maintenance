@@ -1,0 +1,40 @@
+# ====================================
+# .dockerignore
+# Exclude unnecessary files from Docker build context
+# ====================================
+
+# Dependencies (will be installed fresh in container)
+node_modules
+npm-debug.log*
+
+# Next.js build output
+.next
+out
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (use docker-compose environment instead)
+# .env
+# .env.*
+
+# Documentation & Notes
+*.md
+!README.md
+Day2_Note.md
+
+# Misc
+.vercel
+coverage
+*.tsbuildinfo

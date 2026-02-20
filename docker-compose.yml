@@ -1,0 +1,45 @@
+# ====================================
+# BTS Landing — Docker Compose
+# Next.js 16 + PostgreSQL 17
+# Compatible with: podman compose / docker compose
+# ====================================
+
+services:
+  # ===== PostgreSQL Database =====
+  db:
+    image: postgres:16
+    container_name: bts-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: myuser         # 👈 เปลี่ยน Username ตรงนี้
+      POSTGRES_PASSWORD: mypassword # 👈 เปลี่ยน Password ตรงนี้
+      POSTGRES_DB: smart_maintenance     # 👈 ชื่อ Database เริ่มต้น
+    ports:
+      - "6432:5432"
+    volumes:
+      - db-compose_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d bts_workshop" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===== Next.js Application =====
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bts-app
+    restart: unless-stopped
+    ports:
+      - "6300:3000"
+    environment:
+      # DATABASE_URL: postgresql://postgres:123456@db:5432/bts_workshop?schema=public
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-compose_pg_data:
+    external: true  # บอก Compose ว่า "ไปหาเอาข้างนอกนะ"

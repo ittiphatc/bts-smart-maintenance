@@ -1,0 +1,105 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // สำหรับ Credentials Login
+  role          String    @default("user")  // สำหรับ RBAC
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// prisma/schema.prisma (เพิ่มเติมจาก Section 7)
+
+// ========================================
+// Section 8: Maintenance Job Order
+// ========================================
+
+// สถานะงานซ่อม
+enum JobStatus {
+  PENDING     // รอตรวจสอบ
+  IN_PROGRESS // กำลังซ่อม
+  COMPLETED   // ซ่อมเสร็จแล้ว
+  CANCELLED   // ยกเลิก
+}
+
+// ระดับความเร่งด่วน
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ตารางบันทึกงานซ่อม
+model MaintenanceLog {
+  id          Int      @id @default(autoincrement())
+  jobNo       String   @unique // เช่น JOB-202402-001
+
+  // สถานที่เกิดเหตุ
+  location    String   // เช่น "Station Siam (CEN)" หรือ "Train No. 104"
+
+  // รายละเอียดปัญหา
+  subject     String   // หัวข้อแจ้งซ่อม
+  description String   // รายละเอียด
+  reportedBy  String   // ชื่อผู้แจ้ง (Employee ID)
+
+  // การดำเนินงาน
+  status      JobStatus @default(PENDING)
+  priority    Priority  @default(MEDIUM)
+
+  // เวลา
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  // รูปภาพประกอบ (เก็บ URL)
+  photoUrl    String?
+}
